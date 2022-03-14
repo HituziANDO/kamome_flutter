@@ -1,3 +1,7 @@
+## 0.0.4
+
+* Fix typo.
+
 ## 0.0.3
 
 * Fix README.

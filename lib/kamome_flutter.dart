@@ -88,7 +88,7 @@ class KamomeClient {
   ///
   /// ```
   /// JavascriptChannel(
-  ///   name: KamomeClient.channelName,
+  ///   name: KamomeClient.apiName,
   ///   onMessageReceived: (JavascriptMessage result) {
   ///     _kamomeClient.onMessageReceived(result.message);
   ///   },
