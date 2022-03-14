@@ -33,8 +33,9 @@ class _MyAppState extends State<MyApp> {
           case InAppWebViewPage.routeName:
             return MaterialPageRoute(
                 builder: (context) => const InAppWebViewPage());
-          case WebViewPage.routeName:
-            return MaterialPageRoute(builder: (context) => const WebViewPage());
+          case WebViewFlutterPlusPage.routeName:
+            return MaterialPageRoute(
+                builder: (context) => const WebViewFlutterPlusPage());
           default:
             return null;
         }
@@ -44,16 +45,16 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class WebViewPage extends StatefulWidget {
+class WebViewFlutterPlusPage extends StatefulWidget {
   static const routeName = 'webview_flutter_plus';
 
-  const WebViewPage({Key? key}) : super(key: key);
+  const WebViewFlutterPlusPage({Key? key}) : super(key: key);
 
   @override
-  WebViewPageState createState() => WebViewPageState();
+  WebViewFlutterPlusPageState createState() => WebViewFlutterPlusPageState();
 }
 
-class WebViewPageState extends State<WebViewPage> {
+class WebViewFlutterPlusPageState extends State<WebViewFlutterPlusPage> {
   late KamomeClient _client;
 
   @override
@@ -147,7 +148,8 @@ class InAppWebViewPageState extends State<InAppWebViewPage> {
         actions: [
           IconButton(
               onPressed: () {
-                Navigator.of(context).pushNamed(WebViewPage.routeName);
+                Navigator.of(context)
+                    .pushNamed(WebViewFlutterPlusPage.routeName);
               },
               icon: const Icon(Icons.arrow_forward_ios)),
         ],
