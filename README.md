@@ -3,7 +3,7 @@
 kamome_flutter is a plugin for Flutter apps using the WebView. This plugin bridges a gap between JavaScript in the WebView and the native code written
 in Dart.
 
-<img src="./README/illustration_flutter.png" width="400" />
+<img src="https://hituziando.github.io/kamome_flutter/README/illustration_flutter.png" width="400" />
 
 **[NOTE]**
 kamome_flutter requires the WebView plugin such as [flutter_inappwebview](https://pub.dev/packages/flutter_inappwebview)(recommended), [webview_flutter](https://pub.dev/packages/webview_flutter), and [webview_flutter_plus](https://pub.dev/packages/webview_flutter_plus).
