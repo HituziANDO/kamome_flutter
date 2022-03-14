@@ -45,84 +45,7 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class WebViewFlutterPlusPage extends StatefulWidget {
-  static const routeName = 'webview_flutter_plus';
-
-  const WebViewFlutterPlusPage({Key? key}) : super(key: key);
-
-  @override
-  WebViewFlutterPlusPageState createState() => WebViewFlutterPlusPageState();
-}
-
-class WebViewFlutterPlusPageState extends State<WebViewFlutterPlusPage> {
-  late KamomeClient _client;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('webview_flutter_plus'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: WebViewPlus(
-              javascriptMode: JavascriptMode.unrestricted,
-              javascriptChannels: {
-                JavascriptChannel(
-                  name: KamomeClient.apiName,
-                  onMessageReceived: (JavascriptMessage result) {
-                    _client.onMessageReceived(result.message);
-                  },
-                )
-              },
-              onWebViewCreated: (WebViewPlusController controller) {
-                _client = KamomeClient(
-                    _JavaScriptRunner(controller.webViewController));
-                _addCommands(_client);
-
-                _client.howToHandleNonExistentCommand =
-                    HowToHandleNonExistentCommand.rejected;
-
-                controller.loadUrl('assets/index.html');
-              },
-            ),
-          )
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Sends a data to the JS code.
-          _client.send('greeting', data: {
-            'greeting': 'Hello! by WebViewFlutter [\'"+-._~\\@#\$%^&*=,/?;:|{}]'
-          }, callback: (commandName, result, error) {
-            // Received a result from the JS code.
-            print(result);
-          });
-        },
-        tooltip: 'Send Data to JS',
-        child: const Icon(Icons.send),
-      ),
-    );
-  }
-}
-
-class _JavaScriptRunner implements JavaScriptRunner {
-  final WebViewController _controller;
-
-  _JavaScriptRunner(this._controller);
-
-  @override
-  void runJavaScript(String js) async {
-    await _controller.runJavascript(js);
-  }
-}
-
+// Using flutter_inappwebview plugin.
 class InAppWebViewPage extends StatefulWidget {
   static const routeName = 'flutter_inappwebview';
 
@@ -160,6 +83,7 @@ class InAppWebViewPageState extends State<InAppWebViewPage> {
             child: InAppWebView(
               initialFile: 'assets/index.html',
               onWebViewCreated: (InAppWebViewController controller) {
+                // Creates the Client object.
                 _client =
                     KamomeClient(_InAppWebViewJavaScriptRunner(controller));
                 _addCommands(_client);
@@ -167,6 +91,8 @@ class InAppWebViewPageState extends State<InAppWebViewPage> {
                 _client.howToHandleNonExistentCommand =
                     HowToHandleNonExistentCommand.rejected;
 
+                // Adds the JS handler of Kamome plugin.
+                // Copy following code to yours.
                 controller.addJavaScriptHandler(
                     handlerName: KamomeClient.apiName,
                     callback: (args) {
@@ -206,6 +132,88 @@ class _InAppWebViewJavaScriptRunner implements JavaScriptRunner {
   @override
   void runJavaScript(String js) async {
     await _controller.evaluateJavascript(source: js);
+  }
+}
+
+// Using webview_flutter_plus plugin.
+class WebViewFlutterPlusPage extends StatefulWidget {
+  static const routeName = 'webview_flutter_plus';
+
+  const WebViewFlutterPlusPage({Key? key}) : super(key: key);
+
+  @override
+  WebViewFlutterPlusPageState createState() => WebViewFlutterPlusPageState();
+}
+
+class WebViewFlutterPlusPageState extends State<WebViewFlutterPlusPage> {
+  late KamomeClient _client;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('webview_flutter_plus'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: WebViewPlus(
+              javascriptMode: JavascriptMode.unrestricted,
+              javascriptChannels: {
+                // Adds the JS handler of Kamome plugin.
+                // Copy following code to yours.
+                JavascriptChannel(
+                  name: KamomeClient.apiName,
+                  onMessageReceived: (JavascriptMessage result) {
+                    _client.onMessageReceived(result.message);
+                  },
+                )
+              },
+              onWebViewCreated: (WebViewPlusController controller) {
+                // Creates the Client object.
+                _client = KamomeClient(_WebViewFlutterJavaScriptRunner(
+                    controller.webViewController));
+                _addCommands(_client);
+
+                _client.howToHandleNonExistentCommand =
+                    HowToHandleNonExistentCommand.rejected;
+
+                controller.loadUrl('assets/index.html');
+              },
+            ),
+          )
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Sends a data to the JS code.
+          _client.send('greeting', data: {
+            'greeting': 'Hello! by WebViewFlutter [\'"+-._~\\@#\$%^&*=,/?;:|{}]'
+          }, callback: (commandName, result, error) {
+            // Received a result from the JS code.
+            print(result);
+          });
+        },
+        tooltip: 'Send Data to JS',
+        child: const Icon(Icons.send),
+      ),
+    );
+  }
+}
+
+class _WebViewFlutterJavaScriptRunner implements JavaScriptRunner {
+  final WebViewController _controller;
+
+  _WebViewFlutterJavaScriptRunner(this._controller);
+
+  @override
+  void runJavaScript(String js) async {
+    await _controller.runJavascript(js);
   }
 }
 
