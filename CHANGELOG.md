@@ -1,3 +1,7 @@
+## 5.1.0
+
+* The ready state checker is implemented. If the client sends a message before the webView has loaded the web page, it waits for the JS library is ready. When the library is ready, the client retries to send automatically.
+
 ## 0.0.4
 
 * Fix typo.
