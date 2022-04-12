@@ -1,4 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
+
+/// The version code of the Kamome Flutter plugin.
+const kamomeVersionCode = 50100;
 
 enum HowToHandleNonExistentCommand {
   /// Anyway resolved passing null.
@@ -15,6 +19,8 @@ abstract class JavaScriptRunner {
   void runJavaScript(String js);
 }
 
+typedef ReadEventListener = void Function();
+
 /// Receives a [result] that the native client receives it successfully from the JavaScript receiver when it processed a task of a [commandName]'s command.
 /// An [error] when the native client receives it from the JavaScript receiver. If a task in JavaScript results in successful, the error will be null.
 typedef SendMessageCallback = void Function(
@@ -23,15 +29,39 @@ typedef SendMessageCallback = void Function(
 class KamomeClient {
   /// The name of Kamome API in JavaScript.
   static const apiName = 'kamomeFlutter';
+  static const _commandSYN = '_kamomeSYN';
+  static const _commandACK = '_kamomeACK';
 
   /// How to handle non-existent command.
   HowToHandleNonExistentCommand howToHandleNonExistentCommand =
       HowToHandleNonExistentCommand.resolved;
 
+  /// A ready event listener.
+  /// The listener is called when the Kamome JavaScript library goes ready state.
+  ReadEventListener? readEventListener;
+
   final JavaScriptRunner _jsRunner;
   final Map<String, Command> _commands = {};
+  final List<_Request> _requests = [];
+  final _WaitForReady _waitForReady = _WaitForReady();
+  bool _ready = false;
 
-  KamomeClient(this._jsRunner);
+  /// Tells whether the Kamome JavaScript library is ready.
+  bool get isReady => _ready;
+
+  KamomeClient(this._jsRunner) {
+    // Add preset commands.
+    add(Command(_commandSYN, (_, __, completion) {
+      _ready = true;
+      completion.resolve(data: {"versionCode": kamomeVersionCode});
+    }));
+    add(Command(_commandACK, (_, __, completion) {
+      Future.delayed(const Duration(milliseconds: 1)).then((_) => {
+            if (readEventListener != null) {readEventListener!()}
+          });
+      completion.resolve();
+    }));
+  }
 
   /// Adds a [command] called by the JavaScript code.
   void add(Command command) {
@@ -54,27 +84,19 @@ class KamomeClient {
   /// Sends a message to the JavaScript receiver with a [commandName].
   void send(String commandName,
       {Map<String, dynamic>? data, SendMessageCallback? callback}) {
-    if (callback != null) {
-      String callbackId = _addSendMessageCallback(callback);
-      _jsRunner.runJavaScript(
-          _JavaScriptMethod.onReceive(commandName, data, callbackId));
-    } else {
-      _jsRunner
-          .runJavaScript(_JavaScriptMethod.onReceive(commandName, data, null));
-    }
+    String? callbackId = _addSendMessageCallback(callback);
+    _requests
+        .add(_Request(name: commandName, callbackId: callbackId, data: data));
+    _waitForReadyAndSendRequests();
   }
 
   /// Sends a message with a [data] as List to the JavaScript receiver with a [commandName].
   void sendWithListData(String commandName, List<dynamic>? data,
       {SendMessageCallback? callback}) {
-    if (callback != null) {
-      String callbackId = _addSendMessageCallback(callback);
-      _jsRunner.runJavaScript(
-          _JavaScriptMethod.onReceive(commandName, data, callbackId));
-    } else {
-      _jsRunner
-          .runJavaScript(_JavaScriptMethod.onReceive(commandName, data, null));
-    }
+    String? callbackId = _addSendMessageCallback(callback);
+    _requests
+        .add(_Request(name: commandName, callbackId: callbackId, data: data));
+    _waitForReadyAndSendRequests();
   }
 
   /// Executes specified [commandName]'s command.
@@ -126,7 +148,11 @@ class KamomeClient {
     }
   }
 
-  String _addSendMessageCallback(SendMessageCallback callback) {
+  String? _addSendMessageCallback(SendMessageCallback? callback) {
+    if (callback == null) {
+      return null;
+    }
+
     final callbackId = _CallbackId.create();
 
     // Add a temporary command receiving a result from the JavaScript handler.
@@ -152,6 +178,26 @@ class KamomeClient {
     }));
 
     return callbackId;
+  }
+
+  /// Waits for ready. If ready, sends requests to the JS library.
+  void _waitForReadyAndSendRequests() {
+    if (!isReady) {
+      bool isWaiting = _waitForReady.wait(_waitForReadyAndSendRequests);
+
+      if (!isWaiting) {
+        // print("Waiting for ready has timed out.");
+      }
+
+      return;
+    }
+
+    for (var request in _requests) {
+      _jsRunner.runJavaScript(_JavaScriptMethod.onReceive(request));
+    }
+
+    // Reset
+    _requests.clear();
   }
 }
 
@@ -258,6 +304,14 @@ class CommandNotAddedException implements Exception {
   CommandNotAddedException(this.commandName);
 }
 
+class _Request {
+  final String name;
+  final String? callbackId;
+  final Object? data;
+
+  _Request({required this.name, required this.callbackId, required this.data});
+}
+
 class _JavaScriptMethod {
   static const _jsObj = "window.KM";
 
@@ -282,21 +336,36 @@ class _JavaScriptMethod {
     }
   }
 
-  static String onReceive(String name, Object? data, String? callbackId) {
-    if (data != null) {
-      final jsonString = json.encode(data);
-      if (callbackId != null) {
-        return "$_jsObj.onReceive('$name', $jsonString, '$callbackId')";
+  static String onReceive(_Request request) {
+    if (request.data != null) {
+      final jsonString = json.encode(request.data);
+      if (request.callbackId != null) {
+        return "$_jsObj.onReceive('${request.name}', $jsonString, '${request.callbackId}')";
       } else {
-        return "$_jsObj.onReceive('$name', $jsonString, null)";
+        return "$_jsObj.onReceive('${request.name}', $jsonString, null)";
       }
     } else {
-      if (callbackId != null) {
-        return "$_jsObj.onReceive('$name', null, '$callbackId')";
+      if (request.callbackId != null) {
+        return "$_jsObj.onReceive('${request.name}', null, '${request.callbackId}')";
       } else {
-        return "$_jsObj.onReceive('$name', null, null)";
+        return "$_jsObj.onReceive('${request.name}', null, null)";
       }
     }
+  }
+}
+
+class _WaitForReady {
+  int _retryCount = 0;
+
+  bool wait(Function() execute) {
+    if (_retryCount >= 50) {
+      return false;
+    }
+    _retryCount++;
+
+    Future.delayed(const Duration(milliseconds: 200)).then((_) => execute());
+
+    return true;
   }
 }
 

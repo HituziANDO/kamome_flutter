@@ -91,6 +91,24 @@ class InAppWebViewPageState extends State<InAppWebViewPage> {
                 _client.howToHandleNonExistentCommand =
                     HowToHandleNonExistentCommand.rejected;
 
+                // Set a ready event listener.
+                // The listener is called when the Kamome JavaScript library goes ready state.
+                _client.readEventListener = () {
+                  print(
+                      "client.isReady is ${_client.isReady} after loading the web page");
+                };
+                print(
+                    "client.isReady is ${_client.isReady} before loading the web page");
+
+                // If the client sends a message before the webView has loaded the web page,
+                // it waits for the JS library is ready.
+                // When the library is ready, the client retries to send.
+                _client.send('greeting', data: {'greeting': 'Hi!'},
+                    callback: (_, result, __) {
+                  // Received a result from the JS code.
+                  print(result);
+                });
+
                 // Adds the JS handler of Kamome plugin.
                 // Copy following code to yours.
                 controller.addJavaScriptHandler(
@@ -182,6 +200,24 @@ class WebViewFlutterPlusPageState extends State<WebViewFlutterPlusPage> {
 
                 _client.howToHandleNonExistentCommand =
                     HowToHandleNonExistentCommand.rejected;
+
+                // Set a ready event listener.
+                // The listener is called when the Kamome JavaScript library goes ready state.
+                _client.readEventListener = () {
+                  print(
+                      "client.isReady is ${_client.isReady} after loading the web page");
+                };
+                print(
+                    "client.isReady is ${_client.isReady} before loading the web page");
+
+                // If the client sends a message before the webView has loaded the web page,
+                // it waits for the JS library is ready.
+                // When the library is ready, the client retries to send.
+                _client.send('greeting', data: {'greeting': 'Hi!'},
+                    callback: (_, result, __) {
+                  // Received a result from the JS code.
+                  print(result);
+                });
 
                 controller.loadUrl('assets/index.html');
               },
