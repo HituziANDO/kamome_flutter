@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:uuid/uuid.dart';
+
 /// The version code of the Kamome Flutter plugin.
 const kamomeVersionCode = 50100;
 
@@ -153,7 +155,7 @@ class KamomeClient {
       return null;
     }
 
-    final callbackId = _CallbackId.create();
+    final callbackId = const Uuid().v4();
 
     // Add a temporary command receiving a result from the JavaScript handler.
     add(Command(callbackId, (commandName, data, completion) {
@@ -366,14 +368,5 @@ class _WaitForReady {
     Future.delayed(const Duration(milliseconds: 200)).then((_) => execute());
 
     return true;
-  }
-}
-
-class _CallbackId {
-  static int _serial = 0;
-
-  static String create() {
-    int id = _serial++;
-    return id.toString();
   }
 }
