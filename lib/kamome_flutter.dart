@@ -86,7 +86,7 @@ class KamomeClient {
   /// Sends a message to the JavaScript receiver with a [commandName].
   void send(String commandName,
       {Map<String, dynamic>? data, SendMessageCallback? callback}) {
-    String? callbackId = _addSendMessageCallback(callback);
+    String? callbackId = _addSendMessageCallback(commandName, callback);
     _requests
         .add(_Request(name: commandName, callbackId: callbackId, data: data));
     _waitForReadyAndSendRequests();
@@ -95,7 +95,7 @@ class KamomeClient {
   /// Sends a message with a [data] as List to the JavaScript receiver with a [commandName].
   void sendWithListData(String commandName, List<dynamic>? data,
       {SendMessageCallback? callback}) {
-    String? callbackId = _addSendMessageCallback(callback);
+    String? callbackId = _addSendMessageCallback(commandName, callback);
     _requests
         .add(_Request(name: commandName, callbackId: callbackId, data: data));
     _waitForReadyAndSendRequests();
@@ -150,12 +150,13 @@ class KamomeClient {
     }
   }
 
-  String? _addSendMessageCallback(SendMessageCallback? callback) {
+  String? _addSendMessageCallback(
+      String commandName, SendMessageCallback? callback) {
     if (callback == null) {
       return null;
     }
 
-    final callbackId = const Uuid().v4();
+    final callbackId = '_km_' + commandName + '_' + const Uuid().v4();
 
     // Add a temporary command receiving a result from the JavaScript handler.
     add(Command(callbackId, (commandName, data, completion) {
