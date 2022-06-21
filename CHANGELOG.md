@@ -1,3 +1,7 @@
+## 5.2.0
+
+* Minor changes.
+
 ## 5.1.0+1
 
 * Depends on uuid package.
