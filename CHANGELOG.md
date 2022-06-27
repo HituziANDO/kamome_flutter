@@ -1,3 +1,7 @@
+## 5.2.1
+
+* Fixed a bug that send method outputs an error log when SendMessageCallback is null.
+
 ## 5.2.0
 
 * Minor changes.

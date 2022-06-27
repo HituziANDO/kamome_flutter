@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 
 /// The version code of the Kamome Flutter plugin.
-const kamomeVersionCode = 50200;
+const kamomeVersionCode = 50201;
 
 enum HowToHandleNonExistentCommand {
   /// Anyway resolved passing null.
