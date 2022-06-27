@@ -86,7 +86,7 @@ class KamomeClient {
   /// Sends a message to the JavaScript receiver with a [commandName].
   void send(String commandName,
       {Map<String, dynamic>? data, SendMessageCallback? callback}) {
-    String? callbackId = _addSendMessageCallback(commandName, callback);
+    String callbackId = _addSendMessageCallback(commandName, callback);
     _requests
         .add(_Request(name: commandName, callbackId: callbackId, data: data));
     _waitForReadyAndSendRequests();
@@ -95,7 +95,7 @@ class KamomeClient {
   /// Sends a message with a [data] as List to the JavaScript receiver with a [commandName].
   void sendWithListData(String commandName, List<dynamic>? data,
       {SendMessageCallback? callback}) {
-    String? callbackId = _addSendMessageCallback(commandName, callback);
+    String callbackId = _addSendMessageCallback(commandName, callback);
     _requests
         .add(_Request(name: commandName, callbackId: callbackId, data: data));
     _waitForReadyAndSendRequests();
@@ -150,12 +150,8 @@ class KamomeClient {
     }
   }
 
-  String? _addSendMessageCallback(
+  String _addSendMessageCallback(
       String commandName, SendMessageCallback? callback) {
-    if (callback == null) {
-      return null;
-    }
-
     final callbackId = '_km_' + commandName + '_' + const Uuid().v4();
 
     // Add a temporary command receiving a result from the JavaScript handler.
@@ -165,13 +161,18 @@ class KamomeClient {
       final success = data['success'] as bool;
 
       if (success) {
-        callback(commandName, data['result'], null);
+        if (callback != null) {
+          callback(commandName, data['result'], null);
+        }
       } else {
         String errorMessage = 'UnknownError';
         if (data.containsKey('error')) {
           errorMessage = data['error'] as String;
         }
-        callback(commandName, null, errorMessage);
+
+        if (callback != null) {
+          callback(commandName, null, errorMessage);
+        }
       }
 
       completion.resolve();
@@ -309,7 +310,7 @@ class CommandNotAddedException implements Exception {
 
 class _Request {
   final String name;
-  final String? callbackId;
+  final String callbackId;
   final Object? data;
 
   _Request({required this.name, required this.callbackId, required this.data});
@@ -342,17 +343,9 @@ class _JavaScriptMethod {
   static String onReceive(_Request request) {
     if (request.data != null) {
       final jsonString = json.encode(request.data);
-      if (request.callbackId != null) {
-        return "$_jsObj.onReceive('${request.name}', $jsonString, '${request.callbackId}')";
-      } else {
-        return "$_jsObj.onReceive('${request.name}', $jsonString, null)";
-      }
+      return "$_jsObj.onReceive('${request.name}', $jsonString, '${request.callbackId}')";
     } else {
-      if (request.callbackId != null) {
-        return "$_jsObj.onReceive('${request.name}', null, '${request.callbackId}')";
-      } else {
-        return "$_jsObj.onReceive('${request.name}', null, null)";
-      }
+      return "$_jsObj.onReceive('${request.name}', null, '${request.callbackId}')";
     }
   }
 }
