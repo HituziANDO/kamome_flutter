@@ -1,5 +1,8 @@
 # kamome_flutter
 
+![tag](https://img.shields.io/github/v/tag/HituziANDO/kamome_flutter)
+[![npm](https://img.shields.io/npm/v/kamome)](https://www.npmjs.com/package/kamome)
+
 kamome_flutter is a plugin for Flutter apps using the WebView. This plugin bridges a gap between JavaScript in the WebView and the native code written
 in Dart.
 
